@@ -1,11 +1,11 @@
 [package]
-name = "zeroclaw"
+name = "viziclaw"
 version = "0.1.0"
 edition = "2021"
-authors = ["theonlyhennygod"]
+authors = ["dew2105"]
 license = "MIT"
-description = "Zero overhead. Zero compromise. 100% Rust. The fastest, smallest AI assistant."
-repository = "https://github.com/theonlyhennygod/zeroclaw"
+description = "Total visibility. Total control. 100% Rust. Mission control for your AI assistant."
+repository = "https://github.com/dew2105/ViziClaw"
 readme = "README.md"
 keywords = ["ai", "agent", "cli", "assistant", "chatbot"]
 categories = ["command-line-utilities", "api-bindings"]

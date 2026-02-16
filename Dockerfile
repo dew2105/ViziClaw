@@ -25,18 +25,18 @@ COPY . .
 # Touch main.rs to force rebuild
 RUN touch src/main.rs
 RUN cargo build --release --locked && \
-    strip target/release/zeroclaw
+    strip target/release/viziclaw
 
 # ── Stage 2: Permissions & Config Prep ───────────────────────
 FROM busybox:latest AS permissions
 # Create directory structure (simplified workspace path)
-RUN mkdir -p /zeroclaw-data/.zeroclaw /zeroclaw-data/workspace
+RUN mkdir -p /viziclaw-data/.viziclaw /viziclaw-data/workspace
 
 # Create minimal config for PRODUCTION (allows binding to public interfaces)
 # NOTE: Provider configuration must be done via environment variables at runtime
-RUN cat > /zeroclaw-data/.zeroclaw/config.toml << 'EOF'
-workspace_dir = "/zeroclaw-data/workspace"
-config_path = "/zeroclaw-data/.zeroclaw/config.toml"
+RUN cat > /viziclaw-data/.viziclaw/config.toml << 'EOF'
+workspace_dir = "/viziclaw-data/workspace"
+config_path = "/viziclaw-data/.viziclaw/config.toml"
 api_key = ""
 default_provider = "openrouter"
 default_model = "anthropic/claude-sonnet-4-20250514"
@@ -48,7 +48,7 @@ host = "[::]"
 allow_public_bind = true
 EOF
 
-RUN chown -R 65534:65534 /zeroclaw-data
+RUN chown -R 65534:65534 /viziclaw-data
 
 # ── Stage 3: Development Runtime (Debian) ────────────────────
 FROM debian:bookworm-slim AS dev
@@ -63,49 +63,49 @@ RUN apt-get update && apt-get install -y \
     vim \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=permissions /zeroclaw-data /zeroclaw-data
-COPY --from=builder /app/target/release/zeroclaw /usr/local/bin/zeroclaw
+COPY --from=permissions /viziclaw-data /viziclaw-data
+COPY --from=builder /app/target/release/viziclaw /usr/local/bin/viziclaw
 
 # Overwrite minimal config with DEV template (Ollama defaults)
-COPY dev/config.template.toml /zeroclaw-data/.zeroclaw/config.toml
-RUN chown 65534:65534 /zeroclaw-data/.zeroclaw/config.toml
+COPY dev/config.template.toml /viziclaw-data/.viziclaw/config.toml
+RUN chown 65534:65534 /viziclaw-data/.viziclaw/config.toml
 
 # Environment setup
 # Use consistent workspace path
-ENV ZEROCLAW_WORKSPACE=/zeroclaw-data/workspace
-ENV HOME=/zeroclaw-data
+ENV VIZICLAW_WORKSPACE=/viziclaw-data/workspace
+ENV HOME=/viziclaw-data
 # Defaults for local dev (Ollama) - matches config.template.toml
 ENV PROVIDER="ollama"
-ENV ZEROCLAW_MODEL="llama3.2"
-ENV ZEROCLAW_GATEWAY_PORT=3000
+ENV VIZICLAW_MODEL="llama3.2"
+ENV VIZICLAW_GATEWAY_PORT=3000
 
 # Note: API_KEY is intentionally NOT set here to avoid confusion.
 # It is set in config.toml as the Ollama URL.
 
-WORKDIR /zeroclaw-data
+WORKDIR /viziclaw-data
 USER 65534:65534
 EXPOSE 3000
-ENTRYPOINT ["zeroclaw"]
+ENTRYPOINT ["viziclaw"]
 CMD ["gateway", "--port", "3000", "--host", "[::]"]
 
 # ── Stage 4: Production Runtime (Distroless) ─────────────────
 FROM gcr.io/distroless/cc-debian12:nonroot AS release
 
-COPY --from=builder /app/target/release/zeroclaw /usr/local/bin/zeroclaw
-COPY --from=permissions /zeroclaw-data /zeroclaw-data
+COPY --from=builder /app/target/release/viziclaw /usr/local/bin/viziclaw
+COPY --from=permissions /viziclaw-data /viziclaw-data
 
 # Environment setup
-ENV ZEROCLAW_WORKSPACE=/zeroclaw-data/workspace
-ENV HOME=/zeroclaw-data
+ENV VIZICLAW_WORKSPACE=/viziclaw-data/workspace
+ENV HOME=/viziclaw-data
 # Defaults for prod (OpenRouter)
 ENV PROVIDER="openrouter"
-ENV ZEROCLAW_MODEL="anthropic/claude-sonnet-4-20250514"
-ENV ZEROCLAW_GATEWAY_PORT=3000
+ENV VIZICLAW_MODEL="anthropic/claude-sonnet-4-20250514"
+ENV VIZICLAW_GATEWAY_PORT=3000
 
 # API_KEY must be provided at runtime!
 
-WORKDIR /zeroclaw-data
+WORKDIR /viziclaw-data
 USER 65534:65534
 EXPOSE 3000
-ENTRYPOINT ["zeroclaw"]
+ENTRYPOINT ["viziclaw"]
 CMD ["gateway", "--port", "3000", "--host", "[::]"]

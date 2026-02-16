@@ -1,6 +1,6 @@
-# ZeroClaw PR Workflow (High-Volume Collaboration)
+# ViziClaw PR Workflow (High-Volume Collaboration)
 
-This document defines how ZeroClaw handles high PR volume while maintaining:
+This document defines how ViziClaw handles high PR volume while maintaining:
 
 - High performance
 - High efficiency
