@@ -1,3 +1,7 @@
+[workspace]
+members = [".", "tauri-app/src-tauri"]
+resolver = "2"
+
 [package]
 name = "viziclaw"
 version = "0.1.0"

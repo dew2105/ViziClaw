@@ -3,3 +3,6 @@
 *.db-journal
 .DS_Store
 .wt-pr37/
+tauri-app/node_modules/
+tauri-app/dist/
+tauri-app/src-tauri/target
