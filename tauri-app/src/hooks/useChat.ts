@@ -38,7 +38,10 @@ export function useChat() {
   const msgCounter = useRef(0);
 
   useEffect(() => {
+    const active = { current: true };
+
     const unlisten = listen<AgentStreamEvent>("agent-stream", (event) => {
+      if (!active.current) return;
       const data = event.payload;
 
       switch (data.type) {
@@ -146,6 +149,7 @@ export function useChat() {
     });
 
     return () => {
+      active.current = false;
       unlisten.then((fn) => fn());
     };
   }, []);
