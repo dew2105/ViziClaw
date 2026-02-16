@@ -17,7 +17,7 @@ export function Sidebar({
   activeSessionId,
 }: SidebarProps) {
   return (
-    <aside className="w-[280px] bg-surface-alt border-r border-border flex flex-col h-screen">
+    <aside className="w-[280px] bg-surface-alt border-r border-border flex flex-col h-full">
       <div className="p-4 border-b border-border">
         <button
           onClick={onNewChat}
