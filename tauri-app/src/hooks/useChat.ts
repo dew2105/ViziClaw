@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import type { AgentStreamEvent } from "../types/events";
+import type { SessionDetail } from "../types/session";
 
 export interface ChatMessage {
   id: string;
@@ -197,6 +198,24 @@ export function useChat() {
     setSessionId(null);
   }, []);
 
+  const continueSession = useCallback((session: SessionDetail) => {
+    const chatMessages: ChatMessage[] = session.messages.map((msg) => ({
+      id: msg.id,
+      role: msg.role,
+      content: msg.content,
+      toolName: msg.tool_name,
+      toolArgs: msg.tool_args,
+      toolSuccess: msg.tool_success,
+    }));
+    setMessages(chatMessages);
+    setSessionId(session.id);
+    setStreamingContent("");
+    setActiveToolCalls([]);
+    setActivities([]);
+    setIsStreaming(false);
+    msgCounter.current = chatMessages.length;
+  }, []);
+
   return {
     messages,
     streamingContent,
@@ -206,5 +225,6 @@ export function useChat() {
     sessionId,
     sendMessage,
     newSession,
+    continueSession,
   };
 }

@@ -40,6 +40,10 @@ export default function App() {
             <SessionDetail
               session={sessions.selectedSession}
               onClose={sessions.closeInspect}
+              onContinue={() => {
+                chat.continueSession(sessions.selectedSession!);
+                sessions.closeInspect();
+              }}
             />
           ) : (
             <ChatView

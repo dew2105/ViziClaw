@@ -99,6 +99,7 @@ impl Provider for AnthropicProvider {
 
         if Self::is_setup_token(credential) {
             request = request.header("Authorization", format!("Bearer {credential}"));
+            request = request.header("anthropic-beta", "oauth-2025-04-20");
         } else {
             request = request.header("x-api-key", credential);
         }

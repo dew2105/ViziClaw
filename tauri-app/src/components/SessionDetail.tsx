@@ -5,9 +5,10 @@ import type { SessionDetail as SessionDetailType } from "../types/session";
 interface SessionDetailProps {
   session: SessionDetailType;
   onClose: () => void;
+  onContinue: () => void;
 }
 
-export function SessionDetail({ session, onClose }: SessionDetailProps) {
+export function SessionDetail({ session, onClose, onContinue }: SessionDetailProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -29,12 +30,20 @@ export function SessionDetail({ session, onClose }: SessionDetailProps) {
               <span>{session.message_count} messages</span>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="px-3 py-1.5 text-sm text-text-tertiary hover:text-text hover:bg-surface-hover rounded-lg transition-colors duration-300 ease-out"
-          >
-            Back to chat
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onContinue}
+              className="px-3 py-1.5 text-sm bg-accent text-white hover:bg-accent-hover rounded-lg transition-colors duration-300 ease-out"
+            >
+              Continue conversation
+            </button>
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 text-sm text-text-tertiary hover:text-text hover:bg-surface-hover rounded-lg transition-colors duration-300 ease-out"
+            >
+              Back to chat
+            </button>
+          </div>
         </div>
       </div>
 

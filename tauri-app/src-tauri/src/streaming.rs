@@ -238,9 +238,10 @@ async fn stream_chat_anthropic(
         .header("anthropic-version", "2023-06-01")
         .json(&body);
 
-    // OAuth tokens use Bearer auth; API keys use x-api-key header
+    // OAuth tokens use Bearer auth + beta header; API keys use x-api-key header
     if api_key.starts_with("sk-ant-oat01-") {
         req = req.header("Authorization", format!("Bearer {api_key}"));
+        req = req.header("anthropic-beta", "oauth-2025-04-20");
     } else {
         req = req.header("x-api-key", api_key);
     }
@@ -421,14 +422,55 @@ async fn run_streaming_agent_inner(
         format!("{context}{user_message}")
     };
 
+    // Load prior messages for session continuation
+    let prior_messages = session_store
+        .get_session(session_id)
+        .map(|s| s.messages)
+        .unwrap_or_default();
+
     // Persist user message
     session_store.add_message(session_id, "user", user_message, None, None, None)?;
 
     // Build history
-    let mut history = vec![
-        ChatMessage::system(&system_prompt),
-        ChatMessage::user(&enriched),
-    ];
+    let mut history = vec![ChatMessage::system(&system_prompt)];
+
+    for msg in &prior_messages {
+        match msg.role.as_str() {
+            "user" => history.push(ChatMessage::user(&msg.content)),
+            "assistant" => history.push(ChatMessage::assistant(&msg.content)),
+            "tool_call" => {
+                if let (Some(ref name), Some(ref args)) = (&msg.tool_name, &msg.tool_args) {
+                    history.push(ChatMessage::assistant(format!(
+                        "<tool_call>\n{{\"name\": \"{name}\", \"arguments\": {args}}}\n</tool_call>"
+                    )));
+                }
+            }
+            "tool_result" => {
+                if let Some(ref name) = &msg.tool_name {
+                    history.push(ChatMessage::user(format!(
+                        "[Tool results]\n<tool_result name=\"{name}\">\n{}\n</tool_result>",
+                        msg.content
+                    )));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // Merge consecutive same-role messages (required by Anthropic API)
+    let mut i = 1;
+    while i < history.len() {
+        if history[i].role == history[i - 1].role && history[i].role != "system" {
+            let merged = format!("{}\n\n{}", history[i - 1].content, history[i].content);
+            history[i - 1].content = merged;
+            history.remove(i);
+        } else {
+            i += 1;
+        }
+    }
+
+    // Append the new user message (enriched with memory context)
+    history.push(ChatMessage::user(&enriched));
 
     let client = Client::new();
 
@@ -491,8 +533,8 @@ async fn run_streaming_agent_inner(
             };
             session_store.add_message(session_id, "assistant", final_text, None, None, None)?;
 
-            // Auto-title: use first ~60 chars of the user message
-            if user_message.len() > 0 {
+            // Auto-title: only on first message (don't overwrite on continuation)
+            if prior_messages.is_empty() {
                 let title: String = user_message.chars().take(60).collect();
                 let _ = session_store.update_title(session_id, &title);
             }

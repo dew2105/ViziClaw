@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { MessageBubble } from "./MessageBubble";
+import { ToolCallCard } from "./ToolCallCard";
 import { StreamingContent } from "./StreamingContent";
 import { ActivityLog } from "./ActivityLog";
 import { InputBar } from "./InputBar";
@@ -50,9 +51,37 @@ export function ChatView({
         )}
 
         <div className="max-w-3xl mx-auto space-y-4">
-          {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} />
-          ))}
+          {messages.map((msg) => {
+            if (msg.role === "tool_call" && msg.toolName) {
+              return (
+                <ToolCallCard
+                  key={msg.id}
+                  toolCall={{
+                    name: msg.toolName,
+                    arguments: msg.toolArgs || "{}",
+                    status: "success",
+                    output: undefined,
+                  }}
+                />
+              );
+            }
+
+            if (msg.role === "tool_result" && msg.toolName) {
+              return (
+                <ToolCallCard
+                  key={msg.id}
+                  toolCall={{
+                    name: msg.toolName,
+                    arguments: "{}",
+                    status: msg.toolSuccess ? "success" : "error",
+                    output: msg.content,
+                  }}
+                />
+              );
+            }
+
+            return <MessageBubble key={msg.id} message={msg} />;
+          })}
 
           {isStreaming && activities.length > 0 && (
             <ActivityLog activities={activities} />
