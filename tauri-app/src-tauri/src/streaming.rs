@@ -37,8 +37,11 @@ async fn read_claude_code_oauth_token() -> Option<String> {
     let raw = String::from_utf8(output.stdout).ok()?;
     let parsed: serde_json::Value = serde_json::from_str(raw.trim()).ok()?;
 
+    // Credentials are nested under "claudeAiOauth"
+    let creds = parsed.get("claudeAiOauth").unwrap_or(&parsed);
+
     // Check expiry with 60-second buffer
-    if let Some(expires_at) = parsed.get("expiresAt").and_then(|v| v.as_i64()) {
+    if let Some(expires_at) = creds.get("expiresAt").and_then(|v| v.as_i64()) {
         let now_ms = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .ok()?
@@ -48,7 +51,7 @@ async fn read_claude_code_oauth_token() -> Option<String> {
         }
     }
 
-    parsed
+    creds
         .get("accessToken")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
