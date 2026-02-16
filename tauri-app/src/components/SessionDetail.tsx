@@ -11,14 +11,14 @@ export function SessionDetail({ session, onClose }: SessionDetailProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-900 px-6 py-4">
+      <div className="border-b border-border bg-surface-alt px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-100">
+            <h2 className="text-lg font-semibold text-text">
               {session.title}
             </h2>
-            <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
-              <span className="px-2 py-0.5 bg-gray-700 rounded">
+            <div className="flex items-center gap-3 mt-1 text-xs text-text-tertiary">
+              <span className="px-2 py-0.5 bg-surface-active rounded text-text-secondary">
                 {session.model}
               </span>
               <span>{session.provider}</span>
@@ -31,7 +31,7 @@ export function SessionDetail({ session, onClose }: SessionDetailProps) {
           </div>
           <button
             onClick={onClose}
-            className="px-3 py-1.5 text-sm text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded-lg transition-colors"
+            className="px-3 py-1.5 text-sm text-text-tertiary hover:text-text hover:bg-surface-hover rounded-lg transition-colors duration-300 ease-out"
           >
             Back to chat
           </button>

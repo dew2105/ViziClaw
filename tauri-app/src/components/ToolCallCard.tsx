@@ -10,37 +10,37 @@ export function ToolCallCard({ toolCall }: ToolCallCardProps) {
 
   const statusIcon =
     toolCall.status === "running" ? (
-      <span className="inline-block w-2 h-2 rounded-full bg-yellow-400 tool-running" />
+      <span className="inline-block w-2 h-2 rounded-full bg-status-running tool-running" />
     ) : toolCall.status === "success" ? (
-      <span className="inline-block w-2 h-2 rounded-full bg-green-400" />
+      <span className="inline-block w-2 h-2 rounded-full bg-status-success" />
     ) : (
-      <span className="inline-block w-2 h-2 rounded-full bg-red-400" />
+      <span className="inline-block w-2 h-2 rounded-full bg-status-error" />
     );
 
   return (
-    <div className="border border-gray-700 rounded-lg overflow-hidden bg-gray-900">
+    <div className="border border-border rounded-lg overflow-hidden bg-surface">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-800 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface-hover transition-colors duration-300 ease-out"
       >
         {statusIcon}
-        <span className="font-mono text-gray-300">{toolCall.name}</span>
-        <span className="ml-auto text-gray-500 text-xs">
+        <span className="font-mono text-text">{toolCall.name}</span>
+        <span className="ml-auto text-text-tertiary text-xs">
           {expanded ? "▼" : "▶"}
         </span>
       </button>
       {expanded && (
-        <div className="border-t border-gray-700 px-3 py-2 space-y-2">
+        <div className="border-t border-border px-3 py-2 space-y-2">
           <div>
-            <span className="text-xs text-gray-500 uppercase">Arguments</span>
-            <pre className="text-xs font-mono text-gray-400 mt-1 overflow-x-auto whitespace-pre-wrap">
+            <span className="text-xs text-text-tertiary uppercase">Arguments</span>
+            <pre className="text-xs font-mono text-text-secondary mt-1 overflow-x-auto whitespace-pre-wrap">
               {formatJson(toolCall.arguments)}
             </pre>
           </div>
           {toolCall.output && (
             <div>
-              <span className="text-xs text-gray-500 uppercase">Output</span>
-              <pre className="text-xs font-mono text-gray-400 mt-1 overflow-x-auto whitespace-pre-wrap max-h-40 overflow-y-auto">
+              <span className="text-xs text-text-tertiary uppercase">Output</span>
+              <pre className="text-xs font-mono text-text-secondary mt-1 overflow-x-auto whitespace-pre-wrap max-h-40 overflow-y-auto">
                 {toolCall.output}
               </pre>
             </div>

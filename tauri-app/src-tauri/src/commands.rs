@@ -20,11 +20,11 @@ pub async fn send_message(
 
     let provider_name = provider
         .as_deref()
-        .unwrap_or("openrouter")
+        .unwrap_or("anthropic")
         .to_string();
     let model_name = model
         .as_deref()
-        .unwrap_or("anthropic/claude-sonnet-4-20250514")
+        .unwrap_or("claude-sonnet-4-20250514")
         .to_string();
 
     // Create or reuse session
@@ -93,10 +93,10 @@ pub fn new_session(
     provider: Option<String>,
     model: Option<String>,
 ) -> Result<String, String> {
-    let provider_name = provider.as_deref().unwrap_or("openrouter");
+    let provider_name = provider.as_deref().unwrap_or("anthropic");
     let model_name = model
         .as_deref()
-        .unwrap_or("anthropic/claude-sonnet-4-20250514");
+        .unwrap_or("claude-sonnet-4-20250514");
     state
         .session_store
         .create_session(provider_name, model_name)

@@ -38,7 +38,7 @@ export function InputBar({ onSend, disabled }: InputBarProps) {
   }, []);
 
   return (
-    <div className="border-t border-gray-800 bg-gray-900 p-4">
+    <div className="border-t border-border bg-surface-alt p-4">
       <div className="max-w-3xl mx-auto flex gap-3">
         <textarea
           ref={textareaRef}
@@ -51,12 +51,12 @@ export function InputBar({ onSend, disabled }: InputBarProps) {
           placeholder={disabled ? "Waiting for response..." : "Send a message..."}
           disabled={disabled}
           rows={1}
-          className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-gray-100 placeholder-gray-500 resize-none focus:outline-none focus:border-blue-500 transition-colors disabled:opacity-50"
+          className="flex-1 bg-surface border border-border rounded-xl px-4 py-3 text-text placeholder-text-tertiary resize-none focus:outline-none focus:border-border-focus transition-colors duration-300 ease-out disabled:opacity-50"
         />
         <button
           onClick={handleSend}
           disabled={disabled || !value.trim()}
-          className="px-4 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-xl font-medium transition-colors"
+          className="px-4 py-3 bg-charcoal hover:bg-accent-hover disabled:bg-surface-active disabled:text-text-tertiary text-text-on-dark rounded-xl font-medium transition-colors duration-300 ease-out"
         >
           Send
         </button>

@@ -12,21 +12,21 @@ export function ActivityLog({ activities }: ActivityLogProps) {
       {activities.map((activity) => (
         <span
           key={activity.id}
-          className={`activity-pill inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+          className={`activity-pill inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium text-text-secondary ${
             activity.type === "memory"
-              ? "bg-purple-900/50 text-purple-300"
+              ? "bg-pill-memory"
               : activity.type === "provider"
-                ? "bg-blue-900/50 text-blue-300"
-                : "bg-yellow-900/50 text-yellow-300"
+                ? "bg-pill-provider"
+                : "bg-pill-tool"
           }`}
         >
           <span
             className={`w-1.5 h-1.5 rounded-full ${
               activity.type === "memory"
-                ? "bg-purple-400"
+                ? "bg-accent"
                 : activity.type === "provider"
-                  ? "bg-blue-400"
-                  : "bg-yellow-400"
+                  ? "bg-silver"
+                  : "bg-status-running"
             }`}
           />
           {activity.label}

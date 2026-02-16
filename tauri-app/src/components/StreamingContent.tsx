@@ -14,7 +14,7 @@ export function StreamingContent({
 }: StreamingContentProps) {
   return (
     <div className="flex justify-start">
-      <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-gray-800 text-gray-100">
+      <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-surface-alt text-text">
         {toolCalls.length > 0 && (
           <div className="space-y-2 mb-3">
             {toolCalls.map((tc, i) => (
@@ -23,14 +23,14 @@ export function StreamingContent({
           </div>
         )}
         {content && (
-          <div className="prose prose-invert prose-sm max-w-none streaming-cursor">
+          <div className="prose prose-sm max-w-none streaming-cursor">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {content}
             </ReactMarkdown>
           </div>
         )}
         {!content && toolCalls.length === 0 && (
-          <span className="streaming-cursor text-gray-400">Thinking</span>
+          <span className="streaming-cursor text-text-tertiary">Thinking</span>
         )}
       </div>
     </div>

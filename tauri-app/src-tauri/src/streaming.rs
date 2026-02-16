@@ -7,6 +7,7 @@ use serde_json::json;
 use std::sync::Arc;
 use std::time::Instant;
 use tauri::{AppHandle, Emitter};
+use tokio::process::Command;
 use viziclaw::agent::{
     build_context, build_tool_instructions, find_tool, parse_tool_calls, MAX_TOOL_ITERATIONS,
 };
@@ -20,11 +21,45 @@ fn emit_event(app: &AppHandle, event: AgentStreamEvent) {
     let _ = app.emit("agent-stream", &event);
 }
 
+/// Read the Claude Code OAuth token from the macOS Keychain.
+/// Returns `Some(access_token)` if a valid, non-expired token is found.
+async fn read_claude_code_oauth_token() -> Option<String> {
+    let output = Command::new("security")
+        .args(["find-generic-password", "-s", "Claude Code-credentials", "-w"])
+        .output()
+        .await
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    let raw = String::from_utf8(output.stdout).ok()?;
+    let parsed: serde_json::Value = serde_json::from_str(raw.trim()).ok()?;
+
+    // Check expiry with 60-second buffer
+    if let Some(expires_at) = parsed.get("expiresAt").and_then(|v| v.as_i64()) {
+        let now_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .ok()?
+            .as_millis() as i64;
+        if now_ms >= expires_at - 60_000 {
+            return None;
+        }
+    }
+
+    parsed
+        .get("accessToken")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+}
+
 /// Resolve the provider's API endpoint URL from a provider name.
 fn provider_endpoint(provider_name: &str) -> &'static str {
     match provider_name {
         "openrouter" => "https://openrouter.ai/api/v1/chat/completions",
         "openai" => "https://api.openai.com/v1/chat/completions",
+        "anthropic" => "https://api.anthropic.com/v1/messages",
         "ollama" => "http://localhost:11434/v1/chat/completions",
         _ => "https://openrouter.ai/api/v1/chat/completions",
     }
@@ -153,6 +188,116 @@ async fn stream_chat(
     Ok(full_text)
 }
 
+/// Stream a chat completion using SSE from the Anthropic Messages API.
+/// Returns the full accumulated response text.
+async fn stream_chat_anthropic(
+    app: &AppHandle,
+    client: &Client,
+    endpoint: &str,
+    api_key: &str,
+    messages: &[ChatMessage],
+    model: &str,
+    temperature: f64,
+) -> Result<String> {
+    // Extract system prompt (first system message) and remaining messages
+    let system_text = messages
+        .iter()
+        .find(|m| m.role == "system")
+        .map(|m| m.content.clone());
+
+    let api_messages: Vec<serde_json::Value> = messages
+        .iter()
+        .filter(|m| m.role != "system")
+        .map(|m| {
+            json!({
+                "role": m.role,
+                "content": m.content,
+            })
+        })
+        .collect();
+
+    let mut body = json!({
+        "model": model,
+        "messages": api_messages,
+        "max_tokens": 16384,
+        "temperature": temperature,
+        "stream": true,
+    });
+
+    if let Some(ref sys) = system_text {
+        body.as_object_mut()
+            .unwrap()
+            .insert("system".to_string(), json!(sys));
+    }
+
+    let mut req = client
+        .post(endpoint)
+        .header("anthropic-version", "2023-06-01")
+        .json(&body);
+
+    // OAuth tokens use Bearer auth; API keys use x-api-key header
+    if api_key.starts_with("sk-ant-oat01-") {
+        req = req.header("Authorization", format!("Bearer {api_key}"));
+    } else {
+        req = req.header("x-api-key", api_key);
+    }
+
+    let response = req
+        .send()
+        .await
+        .context("Failed to send Anthropic streaming request")?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let body = response.text().await.unwrap_or_default();
+        anyhow::bail!("Anthropic returned {status}: {body}");
+    }
+
+    let mut stream = response.bytes_stream();
+    let mut full_text = String::new();
+    let mut buffer = String::new();
+
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.context("Anthropic stream chunk error")?;
+        buffer.push_str(&String::from_utf8_lossy(&chunk));
+
+        while let Some(newline_pos) = buffer.find('\n') {
+            let line = buffer[..newline_pos].trim().to_string();
+            buffer = buffer[newline_pos + 1..].to_string();
+
+            if line.is_empty() || line.starts_with(':') {
+                continue;
+            }
+
+            if let Some(data) = line.strip_prefix("data: ") {
+                if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(data) {
+                    let event_type = parsed.get("type").and_then(|t| t.as_str()).unwrap_or("");
+
+                    if event_type == "content_block_delta" {
+                        if let Some(text) = parsed
+                            .get("delta")
+                            .and_then(|d| d.get("text"))
+                            .and_then(|t| t.as_str())
+                        {
+                            if !text.is_empty() {
+                                full_text.push_str(text);
+                                emit_event(
+                                    app,
+                                    AgentStreamEvent::TextChunk {
+                                        content: text.to_string(),
+                                    },
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(full_text)
+}
+
 /// Run the streaming agent loop, emitting events to the frontend.
 pub async fn run_streaming_agent(
     app: AppHandle,
@@ -195,13 +340,19 @@ async fn run_streaming_agent_inner(
 
     let provider_name = provider_override
         .or(config.default_provider.as_deref())
-        .unwrap_or("openrouter");
+        .unwrap_or("anthropic");
 
     let model_name = model_override
         .or(config.default_model.as_deref())
-        .unwrap_or("anthropic/claude-sonnet-4-20250514");
+        .unwrap_or("claude-sonnet-4-20250514");
 
-    let api_key = resolve_api_key(&config, provider_name);
+    // For anthropic provider, try Claude Code OAuth token first, then fall back
+    let api_key = if provider_name == "anthropic" {
+        let oauth = read_claude_code_oauth_token().await;
+        oauth.or_else(|| resolve_api_key(&config, provider_name))
+    } else {
+        resolve_api_key(&config, provider_name)
+    };
     let endpoint = provider_endpoint(provider_name);
 
     // Initialize memory
@@ -290,16 +441,34 @@ async fn run_streaming_agent_inner(
 
         let start = Instant::now();
 
-        let full_response = stream_chat(
-            app,
-            &client,
-            endpoint,
-            api_key.as_deref(),
-            &history,
-            model_name,
-            config.default_temperature,
-        )
-        .await?;
+        let full_response = if provider_name == "anthropic" {
+            let key = api_key.as_deref().ok_or_else(|| {
+                anyhow::anyhow!(
+                    "No Anthropic API key found. Install Claude Code or set ANTHROPIC_API_KEY."
+                )
+            })?;
+            stream_chat_anthropic(
+                app,
+                &client,
+                endpoint,
+                key,
+                &history,
+                model_name,
+                config.default_temperature,
+            )
+            .await?
+        } else {
+            stream_chat(
+                app,
+                &client,
+                endpoint,
+                api_key.as_deref(),
+                &history,
+                model_name,
+                config.default_temperature,
+            )
+            .await?
+        };
 
         emit_event(
             app,

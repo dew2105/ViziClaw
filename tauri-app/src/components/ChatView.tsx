@@ -36,13 +36,13 @@ export function ChatView({
         {messages.length === 0 && !isStreaming && (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-400 mb-2">
+              <h1 className="text-2xl font-semibold text-text mb-2">
                 ViziClaw
               </h1>
-              <p className="text-gray-500">
+              <p className="text-text-secondary">
                 Mission Control for your AI assistant
               </p>
-              <p className="text-gray-600 text-sm mt-2">
+              <p className="text-text-tertiary text-sm mt-2">
                 Send a message to get started
               </p>
             </div>

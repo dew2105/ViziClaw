@@ -21,7 +21,7 @@ export default function App() {
   }, [chat.isStreaming, chat.sessionId, sessions.loadSessions]);
 
   return (
-    <div className="flex h-screen bg-gray-950 text-gray-100">
+    <div className="flex h-screen bg-surface text-text">
       <Sidebar
         sessions={sessions.sessions}
         onNewChat={() => {

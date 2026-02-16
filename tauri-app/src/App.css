@@ -1,5 +1,41 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-surface: #F5F6F7;
+  --color-surface-alt: #EDEEF0;
+  --color-surface-hover: #E4E5E8;
+  --color-surface-active: #DADBDD;
+
+  --color-border: #DADBDD;
+  --color-border-focus: #7C8A9A;
+
+  --color-accent: #7C8A9A;
+  --color-accent-hover: #6B7A8A;
+
+  --color-silver: #BFC3C9;
+  --color-charcoal: #1E1F22;
+
+  --color-text: #1E1F22;
+  --color-text-secondary: #5A5D63;
+  --color-text-tertiary: #7C8A9A;
+  --color-text-on-dark: #F5F6F7;
+
+  --color-status-running: #7C8A9A;
+  --color-status-success: #6B8F71;
+  --color-status-error: #A67171;
+
+  --color-pill-memory: #EDEEF0;
+  --color-pill-provider: #E8EBF0;
+  --color-pill-tool: #E8EAE5;
+}
+
+html {
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
 /* Custom scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
@@ -8,11 +44,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: #BFC3C9;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
+  background: #7C8A9A;
 }
 
 /* Blinking cursor for streaming */
@@ -30,22 +66,22 @@
 .streaming-cursor::after {
   content: "\2588";
   animation: blink 1s step-end infinite;
-  color: #60a5fa;
+  color: #7C8A9A;
 }
 
 /* Tool call pulse animation */
-@keyframes pulse-yellow {
+@keyframes pulse-muted {
   0%,
   100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.6;
   }
 }
 
 .tool-running {
-  animation: pulse-yellow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse-muted 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Activity pill fade-in */
@@ -61,7 +97,7 @@
 }
 
 .activity-pill {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.4s ease-out;
 }
 
 /* Smooth scrolling */

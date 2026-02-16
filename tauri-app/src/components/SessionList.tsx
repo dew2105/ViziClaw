@@ -46,7 +46,7 @@ export function SessionList({
 }: SessionListProps) {
   if (sessions.length === 0) {
     return (
-      <div className="p-4 text-gray-500 text-sm text-center">
+      <div className="p-4 text-text-tertiary text-sm text-center">
         No sessions yet
       </div>
     );
@@ -58,12 +58,12 @@ export function SessionList({
         <div
           key={session.id}
           onClick={() => onSelect(session.id)}
-          className={`group px-4 py-3 cursor-pointer hover:bg-gray-800 transition-colors ${
-            activeId === session.id ? "bg-gray-800" : ""
+          className={`group px-4 py-3 cursor-pointer hover:bg-surface-hover transition-colors duration-300 ease-out ${
+            activeId === session.id ? "bg-surface-active" : ""
           }`}
         >
           <div className="flex items-start justify-between">
-            <h3 className="text-sm font-medium text-gray-200 truncate flex-1 mr-2">
+            <h3 className="text-sm font-medium text-text truncate flex-1 mr-2">
               {session.title}
             </h3>
             <button
@@ -71,19 +71,19 @@ export function SessionList({
                 e.stopPropagation();
                 onDelete(session.id);
               }}
-              className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 text-xs transition-opacity"
+              className="opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-status-error text-xs transition-opacity duration-300 ease-out"
             >
               &times;
             </button>
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs px-1.5 py-0.5 bg-gray-700 rounded text-gray-400">
+            <span className="text-xs px-1.5 py-0.5 bg-surface-active rounded text-text-secondary">
               {modelBadge(session.model)}
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-text-tertiary">
               {formatTimestamp(session.updated_at)}
             </span>
-            <span className="text-xs text-gray-600">
+            <span className="text-xs text-text-tertiary">
               {session.message_count} msgs
             </span>
           </div>
